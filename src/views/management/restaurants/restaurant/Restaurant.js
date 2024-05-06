@@ -1,5 +1,7 @@
-import React, { useEffect, useState } from 'react'
-import Axios from 'axios'
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';   
+import CIcon from '@coreui/icons-react';
+import Axios from 'axios';
 import {
   CButton,
   CTable,
@@ -8,16 +10,20 @@ import {
   CTableRow,
   CTableHeaderCell,
   CTableDataCell
-} from '@coreui/react'
-import { object } from 'prop-types';
+} from '@coreui/react';
+import {
+  cilPencil,
+  cilTrash
+} from '@coreui/icons'
 
 const Restaurant = () => {
 const [restaurantData, setRestaurantData] = useState([]);
+const navigate = useNavigate();
 
 useEffect(()=> {
   const getRestaurants = async() => {
     const response = await Axios({
-      url: 'http://localhost:1337/api/listrestaurant'
+      url: 'http://localhost:1337/api/listrestaurants'
     });
     const listRestaurant = Object.keys(response.data).map(i=> response.data[i]);
     setRestaurantData(listRestaurant.flat());
@@ -26,8 +32,27 @@ useEffect(()=> {
 },[]);
 
 function handleCreateRestaurant(event){
+  navigate('/restaurants/restaurantform');
 
 }
+
+function handleEdit(restaurantId) {
+  console.log(`/restaurants/restauranteditform/${restaurantId}`)
+  navigate(`/restaurants/restauranteditform/${restaurantId}`);
+}
+
+const handleDisable = async(restaurantId) => {
+  try{
+    console.log(restaurantId)
+    var url="http://localhost:1337/api/disiablerestaurant/"+ restaurantId;
+    const response = await Axios.put(url);
+    window.location.reload();
+  }
+  catch(e){
+    console.log(e);
+  }
+}
+
 const columns = [ 
   {
     title: 'Name',
@@ -52,8 +77,13 @@ const columns = [
   {
     title: 'options',
     render: (text, record) =>(
-      <div>
-
+      <div>  
+      <CButton onClick={() => handleEdit(record.restaurantId)}>
+       <CIcon icon={cilPencil}/>
+      </CButton>
+      <CButton onClick={() => handleDisable(record.restaurantId)}>
+      <CIcon icon={cilTrash} />
+      </CButton>
       </div>
     )
   }
@@ -61,32 +91,30 @@ const columns = [
 
   return (
     <div>
-      <CButton onClick={handleCreateRestaurant}> New Restaurant </CButton>
+      <CButton onClick={handleCreateRestaurant}>New Restaurant</CButton>
       <CTable>
         <CTableHead>
           <CTableRow>
-            {
-              columns.map((column, index)=> (
-                <CTableHeaderCell key= {index}> {column.title} </CTableHeaderCell>
-
-              ))
-            }
+            {columns.map((column, index) => (
+              <CTableHeaderCell key={index}>{column.title}</CTableHeaderCell>
+            ))}
           </CTableRow>
         </CTableHead>
         <CTableBody>
-            {
-              restaurantData.map((restaurant, index) =>(
-                <CTableRow key={index}>
-                  {columns.map((column, columIndex)=> (
-                    <CTableDataCell key={columIndex}> {restaurant[column.dataIndex]}</CTableDataCell>
-                  ))}
-                </CTableRow>
-              ))
-            }
+          {restaurantData.map((restaurant, index) => (
+            <CTableRow key={index}>
+              {columns.map((column, columnIndex) => (
+                <CTableDataCell key={columnIndex}>
+                  {column.render ? column.render(restaurant[column.dataIndex], restaurant) : restaurant[column.dataIndex]}
+                </CTableDataCell>
+              ))}
+            </CTableRow>
+          ))}
         </CTableBody>
       </CTable>
     </div>
-  )
+  );
+
 }
 
-export default Restaurant
+export default Restaurant;

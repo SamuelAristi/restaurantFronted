@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import Axios from "axios";
 import {
     CForm,
@@ -9,8 +9,9 @@ import {
     CButton
 } from '@coreui/react'
 
-const RestaurantForm = () => {
+const RestaurantEditForm = () => {
 
+    const{restaurantId} = useParams();
     const [restaurantData, setRestaurantData] = useState({
         restaurantName: '',
         restaurantNit: '',
@@ -18,6 +19,7 @@ const RestaurantForm = () => {
         restaurantPhone: '',
         cityId: 0
     });
+
     const [departments, setDepartments] = useState([]);
     const [selectedDepartment, setSelectedDepartment] = useState('');
     const [cities, setCities] = useState([]);
@@ -25,6 +27,12 @@ const RestaurantForm = () => {
     const navigate = useNavigate();
 
     useEffect(()=>{
+
+        const getRestaurant = async()=>{
+            const response = await Axios({url: `http://localhost:1337/api/listrestaurant/${restaurantId}`})
+            const restaurant = response.data.data
+            setRestaurantData(restaurant)
+        }
         const getDepartments = async () => {
             const response = await Axios({url:'http://localhost:1337/api/listdepartments'});
             const lstDepartments = Object.keys(response.data).map(i=> response.data[i]);
@@ -37,12 +45,13 @@ const RestaurantForm = () => {
             setCities(lstCities.flat());
         }
 
+        getRestaurant();
         getDepartments();
 
         if(selectedDepartment !== "")
             getCities(selectedDepartment);
 
-    },[selectedDepartment]);
+    },[selectedDepartment,restaurantId]);
 
     function handleSelectDepartments(event){
         setSelectedDepartment(event.target.value);
@@ -70,8 +79,7 @@ const RestaurantForm = () => {
 
     const handleSubmit = async()=>{
         try{
-            const response = await Axios.post('http://localhost:1337/api/createrrestaurant', restaurantData);
-            console.log(response.data);
+            const response = await Axios.post(`http://localhost:1337/api/updaterestaurant/${restaurantId}`, restaurantData);
             navigate('/restaurants/restaurant');
             
         }
@@ -120,4 +128,4 @@ const RestaurantForm = () => {
     )
 }
 
-export default RestaurantForm;
+export default RestaurantEditForm;
